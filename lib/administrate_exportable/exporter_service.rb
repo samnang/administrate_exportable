@@ -2,6 +2,8 @@ require 'csv'
 
 module AdministrateExportable
   class ExporterService
+    BATCH_SIZE = 1000
+
     def self.csv(dashboard, resource_class, resources)
       new(dashboard, resource_class, resources).csv
     end
@@ -17,10 +19,16 @@ module AdministrateExportable
 
         csv << headers
 
-        collection.find_each do |record|
-          csv << attributes_to_export.map do |attribute_key, attribute_type|
-            record_attribute(record, attribute_key, attribute_type)
+        1.step.each do |page|
+          records = collection.page(page).per(BATCH_SIZE)
+
+          records.each do |record|
+            csv << attributes_to_export.map do |attribute_key, attribute_type|
+              record_attribute(record, attribute_key, attribute_type)
+            end
           end
+
+          break if records.last_page?
         end
       end
     end

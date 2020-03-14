@@ -105,5 +105,18 @@ RSpec.describe AdministrateExportable::ExporterService, type: :helper do
         expect(exported_data[4]).to eq '04:05AM'
       end
     end
+
+    context 'exporting with preserving the order' do
+      it 'exports correct data' do
+        User.create(first_name: 'John', last_name: 'Doe', email: 'john@email.com', password: '123')
+        User.create(first_name: 'Jane', last_name: 'Doe', email: 'jane@email.com', password: '123')
+
+        result = AdministrateExportable::ExporterService.csv(UserDashboard.new, User, User.order(created_at: :desc))
+        exported_data = result.split("\n").map { |row| row.split(",") }
+
+        expect(exported_data[1][1]).to eq("Jane")
+        expect(exported_data[2][1]).to eq("John")
+      end
+    end
   end
 end
